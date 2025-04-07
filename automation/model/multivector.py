@@ -108,17 +108,14 @@ class DataExtractionPipeline:
         """Creates a structured prompt for document processing."""
         return PromptTemplate(
             template="""
-            Role & Task Definition:
-            "You are an advanced AI specializing in financial document processing. 
-            Your task is to extract structured data from a PDF containing asset details. 
-            Extract key-value pairs while preserving their hierarchical structure and relationships."
-
-            Context Awareness:
-            "The PDF contains financial data in a structured tabular format. 
-            The fields follow a standard format commonly used in hedge fund and asset management reports. 
-            Ensure accurate extraction of each field, and return data in a clean JSON format."
-
-            Example Input (Text Extracted from PDF):
+            You are an expert in document data extraction with a deep understanding of financial and investment-related documents. Given a {text}, your task is to accurately extract specific fields while preserving structure, recognizing patterns, and handling formatting variations. You must ignore irrelevant content and ensure high accuracy.
+            Instructions:
+                1. Pattern Recognition: Identify and extract relevant data based on context and structure.
+                2. Handling Variations: Normalize different formats while maintaining data integrity.
+                3. Strict Output Format: Return only the extracted data in the JSON structure below—no additional text, explanations, or formatting changes.
+                4. Missing Fields: If a field is unavailable, return "N/A".
+    
+            Example Expected output (Text Extracted from PDF):
             Asset Name: Caligan Partners Onshore Fund LP  
             Abbreviation Name: Caligan Partners  
             Asset Manager: None  
@@ -139,6 +136,17 @@ class DataExtractionPipeline:
             Benchmark 2: MSCI WORLD  
             IDD Rating: A  
             ODD Rating: N/A  
+            
+            Additional information :
+                1. Security Type: Extract from the Presentation document (e.g., "Private Equity," "Hedge Fund").
+                2. Sector: Found in the Detail tab within the Presentation.
+                3. Region: Located in the Presentation, often given in percentage format (e.g., "86% North America" → "North America").
+                4. Legal Structure: Extract from the Attributes tab based on PPM document references (e.g., "Delaware Limited Partnership" → "Partnership").
+                5. Domicile: Found in the Attributes tab within the Presentation (e.g., "Delaware" → "U.S.").
+                6. AUM Time Series: Extracted from the AUM Spreadsheet provided.
+                7. Exposure Time Series: Extracted from the Exposure Spreadsheet provided.
+                8. Return Time Series: Available in the Presentation document.
+                9. Management Company: Extract from the document. 
 
             Context1: {context}
             Context2: {context2}
@@ -186,8 +194,8 @@ vector_manager = VectorStoreManager(embeddings, VECTORDATABASEPATH_1, VECTORDATA
 parent_vectorstore, child_vectorstore = vector_manager.initialize_vector_stores(documents)
 
 data_pipeline = DataExtractionPipeline(parent_vectorstore, child_vectorstore, llm)
-with open("./fields_list.txt", "r") as files:
-    fields = files.read().strip()
+# with open("./fields_list.txt", "r") as files:
+#     fields = files.read().strip()
 
 
 def content_piepline():
@@ -198,6 +206,7 @@ def content_piepline():
     print(extracted_json)
     return extracted_json
 
+content_piepline()
 
 # instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision."
 # response = data_pipeline.process_data(instructions)

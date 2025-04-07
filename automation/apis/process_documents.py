@@ -128,7 +128,7 @@ class APIClient:
         "substrategyId": 0,
         "substrategy": "string",
         "strategyDescription": "string",
-        "abbrName": extracted_data.get("Detail tab", {}).get("Abbreviated name", "Not Found"),
+        "abbrName": f"{extracted_data.get("Management Company", "Not Found")}",
         "effectiveDate": formatted_time,
         "overrideStrategy": "string",
         
