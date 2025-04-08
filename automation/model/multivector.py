@@ -18,12 +18,18 @@ os.environ['AZURE_OPENAI_ENDPOINT'] = os.getenv('AZURE_OPENAI_ENDPOINT')
 os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
 os.environ["OPENAI_API_VERSION"] = "2023-03-15-preview"
 
+# os.environ['OPENAI_API_TYPE '] = 'azure'
+# os.environ['AZURE_OPENAI_ENDPOINT'] = os.getenv('AZURE_OPENAI_ENDPOINT')
+# os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+# os.environ["OPENAI_API_VERSION"] = "2024-08-01-preview"
+
 DATAFILEPATH = r"./data/IPPE"
 VECTORDATABASEPATH_1 = "multivector/parent"
 VECTORDATABASEPATH_2 = "multivector/child"
 
 # Initialize the model
 llm = AzureChatOpenAI(deployment_name="gpt-4o", model_name="gpt-4o", temperature=0.8,top_p=0.9)
+# llm = AzureChatOpenAI(deployment_name="gpt-4o-mini", model_name="gpt-4o-mini", temperature=0.8,top_p=0.9)
 embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L12-v2', model_kwargs={'device': 'cpu'})
 
 class DocumentLoader:
@@ -229,7 +235,7 @@ def content_piepline():
     print(extracted_json)
     return extracted_json
 
-# content_piepline()
+content_piepline()
 
 # instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision."
 # response = data_pipeline.process_data(instructions)
