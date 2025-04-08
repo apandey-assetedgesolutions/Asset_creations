@@ -70,23 +70,66 @@ class LLMProcessor:
     def create_prompt(self):
         return PromptTemplate(
             template="""
-            You are an expert in document data extraction with a deep understanding of financial and investment-related documents. Given a {text}, your task is to accurately extract specific fields while preserving structure, recognizing patterns, and handling formatting variations. You must ignore irrelevant content and ensure high accuracy.
-            Instructions:
-                1. Pattern Recognition: Identify and extract relevant data based on context and structure.
-                2. Handling Variations: Normalize different formats while maintaining data integrity.
-                3. Strict Output Format: Return only the extracted data in the JSON structure below—no additional text, explanations, or formatting changes.
-                4. Missing Fields: If a field is unavailable, return "N/A".
-                
-            Need to extract fields :
-                1. Security Type: Extract from the Presentation document (e.g., "Private Equity," "Hedge Fund").
-                2. Sector: Found in the Detail tab within the Presentation.
-                3. Region: Located in the Presentation, often given in percentage format (e.g., "86% North America" → "North America").
-                4. Legal Structure: Extract from the Attributes tab based on PPM document references (e.g., "Delaware Limited Partnership" → "Partnership").
-                5. Domicile: Found in the Attributes tab within the Presentation (e.g., "Delaware" → "U.S.").
-                6. AUM Time Series: Extracted from the AUM Spreadsheet provided.
-                7. Exposure Time Series: Extracted from the Exposure Spreadsheet provided.
-                8. Return Time Series: Available in the Presentation document.
-                9. Management Company: Extract from the document. 
+            You are a highly specialized expert in document data extraction, with a strong understanding of financial and investment-related content. Given a {text}, your objective is to extract specific fields accurately—by reasoning through context, structure, and formatting patterns. Follow a deliberate, step-by-step thought process. Use self-questions to guide extraction and apply logic to resolve ambiguity.
+            🧠 THINK, THEN ACT:
+            For each field, follow this process:
+            1.	Think:
+            o	"Where in this text would this information most likely appear?"
+            o	"Are there variations or synonyms I should account for?"
+            o	"Does this match known patterns from financial documents?"
+            2.	Act:
+            o	Extract the correct value.
+            o	Normalize format where needed.
+            o	If unavailable, return "N/A".
+            🧩 INSTRUCTIONS:
+            1.	Pattern Recognition: Identify and extract relevant fields using contextual and structural cues.
+            2.	Variation Handling: Normalize differences in format (e.g., "Feb 1, 2022" → "02/01/2022").
+            3.	Noise Filtering: Ignore irrelevant or unrelated content. Focus only on actionable data.
+            4.	Strict JSON Format: Return output only in the following format. No additional text or commentary.
+            5.	Missing Fields: Return "N/A" where data is not available or cannot be confidently inferred.
+
+            🎯 OUTPUT FORMAT (JSON)
+            json
+            CopyEdit
+            {{
+            "Asset Name": "",
+            "Abbreviation Name": "",
+            "Asset Manager": "",
+            "Security Type": "",
+            "Inception Date": "",
+            "Investment Status": "",
+            "Asset Status": "",
+            "Strategy": "",
+            "Substrategy": "",
+            "Primary Analyst": "",
+            "Secondary Analyst": "",
+            "Sector": "",
+            "Subsector": "",
+            "Asset Class": "",
+            "Region": "",
+            "Classification": "",
+            "Benchmark 1": "",
+            "Benchmark 2": "",
+            "IDD Rating": "",
+            "ODD Rating": "",
+            "Legal Structure": "",
+            "Domicile": "",
+            "AUM Time Series": "",
+            "Exposure Time Series": "",
+            "Return Time Series": "",
+            "Management Company": ""
+            }}
+
+            🔎 EXTRACTION TIPS:
+            •	Security Type → Presentation document (e.g., "Private Equity", "Hedge Fund").
+            •	Sector → "Detail" tab in Presentation.
+            •	Region → If listed as a percentage, convert to region name (e.g., "86% North America" → "North America").
+            •	Legal Structure → From "Attributes" tab; interpret references to legal types (e.g., "Delaware Limited Partnership" → "Partnership").
+            •	Domicile → Usually in the Attributes tab (e.g., "Delaware" → "U.S.").
+            •	AUM, Exposure, Return Time Series → Extract from respective spreadsheet/document sections.
+            •	If multiple values are found, prioritize the most explicit and structured one.
+
+
 
             Context: {context}
             """,
@@ -113,18 +156,18 @@ class JSONExtractor:
         return "No JSON content found."
 
 
-embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L12-v2', model_kwargs={'device': 'cpu'})
-doc_processor = DocumentProcessor(Config.DATAFILEPATH)
-documents = doc_processor.load_and_split_documents()
+# embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L12-v2', model_kwargs={'device': 'cpu'})
+# doc_processor = DocumentProcessor(Config.DATAFILEPATH)
+# documents = doc_processor.load_and_split_documents()
 
-vector_store = VectorStore(Config.VECTORDATABASEPATH, embeddings)
-vector_store.create_vector_store(documents)
-vectorstore_path = vector_store.load_vector_store()
+# vector_store = VectorStore(Config.VECTORDATABASEPATH, embeddings)
+# vector_store.create_vector_store(documents)
+# vectorstore_path = vector_store.load_vector_store()
 
-llm_processor = LLMProcessor()
-instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision"
-response = llm_processor.process_request(vectorstore_path, instructions)
+# llm_processor = LLMProcessor()
+# instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision"
+# response = llm_processor.process_request(vectorstore_path, instructions)
 
-response_content = response.content if hasattr(response, "content") else str(response)
-extracted_json = JSONExtractor.extract_json(response_content)
-print(extracted_json)
+# response_content = response.content if hasattr(response, "content") else str(response)
+# extracted_json = JSONExtractor.extract_json(response_content)
+# print(extracted_json)

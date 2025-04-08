@@ -85,17 +85,17 @@ except Exception as e:
     print(f"Error processing documents: {e}")
     exit(1)
 
-# # Update Processed For All
-# try:
-#     UpdateProcessedForAll_payload = [doc["ActivityId"] for doc in unprocessed_documents]
-#     if UpdateProcessedForAll_payload:
-#         UpdateProcessedForAll_url = f"/GenAI/UpdateProcessedForAll/{UpdateProcessedForAll_payload}"
-#         Update_Processed_ForAll = client.post_request(endpoint=UpdateProcessedForAll_url)
-#         print("Update Processed For All:", Update_Processed_ForAll)
-#     else:
-#         print("No documents to update.")
-# except Exception as e:
-#     print(f"Error updating processed documents: {e}")
+# Update Processed For All
+try:
+    UpdateProcessedForAll_payload = [doc["ActivityId"] for doc in unprocessed_documents]
+    if UpdateProcessedForAll_payload:
+        UpdateProcessedForAll_url = f"/GenAI/UpdateProcessedForAll/{UpdateProcessedForAll_payload}"
+        Update_Processed_ForAll = client.post_request(endpoint=UpdateProcessedForAll_url)
+        print("Update Processed For All:", Update_Processed_ForAll)
+    else:
+        print("No documents to update.")
+except Exception as e:
+    print(f"Error updating processed documents: {e}")
 
 print("Step 1 : Insert Document Key Values")
 # Insert Document Key Values
@@ -125,16 +125,16 @@ try:
     if isinstance(extracted_json, str):
         extracted_json = json.loads(extracted_json)  
     Insert_DocKeyValues_ = Insert_DocKeyValues_transform_json(extracted_json)
-    print('Inserted Document Key Values payload', Insert_DocKeyValues_)
+    # print('Inserted Document Key Values payload', Insert_DocKeyValues_)
     Insert_DocKeyValues = client.post_request(endpoint=InsertDocKeyValues, payload=Insert_DocKeyValues_)
-    print("Inserted Document Key Values:", Insert_DocKeyValues)
+    # print("Inserted Document Key Values:", Insert_DocKeyValues)
 except Exception as e:
     print(f"Error inserting document key values: {e}")
 
 # Fetch all steps
 try:
     Get_All_Steps = client.get_request(GetAllSteps)
-    print("Fetched Steps:", Get_All_Steps)
+    # print("Fetched Steps:", Get_All_Steps)
 except Exception as e:
     print(f"Error fetching steps: {e}")
 
@@ -153,6 +153,7 @@ except Exception as e:
 # Upload extracted data
 try:
     formatted_data = client.format_asset_data(extracted_json)
+    print(formatted_data)
     upload_response = client.upload_asset(formatted_data)
     print("Upload Response:", upload_response)
 except Exception as e:
@@ -172,7 +173,7 @@ Attribute_creation_payload = {
   "operatingCurrencyId": 0,
   "operatingCurrency": "string",
   "legalStructureId": 0,
-  "legalStructure": "string",
+  "legalStructure": f"{extracted_json.get("ODD Rating", "Not Found")}",
   "domicileCountryId": 0,
   "domicileCountry": "string",
   "quarterlyLetter": True,

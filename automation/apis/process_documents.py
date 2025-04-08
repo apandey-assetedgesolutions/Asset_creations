@@ -101,14 +101,125 @@ class APIClient:
     
 
         
+    # def format_asset_data(self, extracted_data):
+        
+        
+    #     if isinstance(extracted_data, str):
+    #         try:
+    #             extracted_data = json.loads(extracted_data)
+    #         except json.JSONDecodeError:
+    #             raise ValueError("Invalid JSON format received")
+    #     current_time = datetime.now(timezone.utc).isoformat()
+
+    #     if "IsActive" in extracted_data:
+    #         is_active = extracted_data["IsActive"]  # Use provided value (0 or 1)
+    #     else:
+    #         is_active = 1
+
+    #     return {
+    #     "assetId": 0,
+    #     "securityTypeId": 0,
+    #     "securityType": f"{extracted_data.get("Security Type", "Not Found")}",
+    #     "assetClassId": 0,
+    #     "assetClass": "string",
+    #     "assetName": f"genai {extracted_data.get("Asset Name", "Not Found")}",
+    #     "strategyId": 0,
+    #     "strategy": f"{extracted_data.get("Strategy", "Not Found")}",
+    #     "substrategyId": 0,
+    #     "substrategy": f"{extracted_data.get("Substrategy", "Not Found")}",
+    #     "strategyDescription": "string",
+    #     "abbrName": f"{extracted_data.get("Abbreviation Name", "Not Found")}",
+    #     "effectiveDate":  f"{extracted_data.get("Inception Date", "Not Found")}",
+    #     "overrideStrategy": "string",
+        
+    #     "investmentStatusId": 0,
+    #     "investmentStatus": "string",
+    #     "bloombergId": "string",
+    #     "valuationDate": formatted_time,
+    #     "regionId": 0,
+    #     "region": f"{extracted_data.get("Region", "Not Found")}",
+    #     "subregionId": 0,
+    #     "subregion": "string",
+    #     "assetStatusId": 0,
+    #     "assetStatus": f"{extracted_data.get("Investment Status", "Not Found")}",
+    #     "primaryAnalystId": 0,
+    #     "primaryAnalyst": "string",
+    #     "secondaryAnalystId": 0,
+    #     "secondaryAnalyst": "string",
+    #     "sectorId": 0,
+    #     "sector": f"{extracted_data.get("Sector", "Not Found")}",
+    #     "subSectorId": 0,
+    #     "subSector": "string",
+    #     "accountTypeId": 0,
+    #     "primaryBM": f"{extracted_data.get("Benchmark 1", "Not Found")}",
+    #     "secondaryBM": f"{extracted_data.get("Benchmark 2", "Not Found")}",
+    #     "modifiedBy": 0,
+    #     "managerContactId": 0,
+    #     "managerContact": "string",
+    #     "returnsList": [
+    #         {
+    #         "dateType": "string",
+    #         "returnAmount": 0,
+    #         "returnDate": formatted_time,
+    #         "returnFreq": 1,
+    #         "isFinal": "true",
+    #         "roR": 0,
+    #         "roRNullable": 0,
+    #         "entityName": "string",
+    #         "reportDate": formatted_time,
+    #         "date": formatted_time,
+    #         "entityId": 0
+    #         }
+    #     ],
+    #     "assetsList": [
+    #         {
+    #         "assetType": f"{extracted_data.get("Asset Class", "Not Found")}",
+    #         "assetValue": 0,
+    #         "assetId": 0,
+    #         "assetName": f"{extracted_data.get("Asset Name", "Not Found")}",
+    #         "accountTypeId": 0,
+    #         "isMarketable": "true"
+    #         }
+    #     ],
+    #     "portfolioHoldings": [
+    #         {
+    #         "familyName": "string",
+    #         "basketId": 0,
+    #         "basketName": "string",
+    #         "investmentValue": 0
+    #         }
+    #     ],
+    #     "transactionList": [
+    #         {
+    #         "transTypeId": 0,
+    #         "transName": "string",
+    #         "transDate": "2025-03-18T10:42:03.951Z",
+    #         "transValue": 0
+    #         }
+    #     ],
+    #     "rptDate": "2025-03-18T10:42:03.951Z",
+    #     "ytdTWR": 0,
+    #     "oneYrTWR": 0,
+    #     "threeYrTWR": 0,
+    #     "fiveYrTWR": 0,
+    #     "itdtwr": 0,
+    #     "itdStdDev": 0,
+    #     "iddRating": "string",
+    #     "iddRatingValue": 0,
+    #     "iddDate": "2025-03-18T10:42:03.951Z",
+    #     "IsActive": is_active,
+    #     "oddRating": f"{extracted_data.get("ODD Rating", "Not Found")}",
+    #     "oddRatingValue": 0,
+    #     "oddDate": "2025-03-18T10:42:03.951Z",
+    #     "isClientSpecific": 'true'
+    #     }
     def format_asset_data(self, extracted_data):
-        
-        
         if isinstance(extracted_data, str):
             try:
                 extracted_data = json.loads(extracted_data)
             except json.JSONDecodeError:
                 raise ValueError("Invalid JSON format received")
+        
         current_time = datetime.now(timezone.utc).isoformat()
 
         if "IsActive" in extracted_data:
@@ -117,101 +228,100 @@ class APIClient:
             is_active = 1
 
         return {
-        "assetId": 0,
-        "securityTypeId": 0,
-        "securityType": f"{extracted_data.get("Security Type", "Not Found")}",
-        "assetClassId": 0,
-        "assetClass": "string",
-        "assetName": f"{extracted_data.get("Management Company", "Not Found")}",
-        "strategyId": 0,
-        "strategy": "string",
-        "substrategyId": 0,
-        "substrategy": "string",
-        "strategyDescription": "string",
-        "abbrName": f"{extracted_data.get("Management Company", "Not Found")}",
-        "effectiveDate": formatted_time,
-        "overrideStrategy": "string",
-        
-        "investmentStatusId": 0,
-        "investmentStatus": "string",
-        "bloombergId": "string",
-        "valuationDate": formatted_time,
-        "regionId": 0,
-        "region": extracted_data.get("Detail tab", {}).get("Region", "Not Found"),
-        "subregionId": 0,
-        "subregion": "string",
-        "assetStatusId": 0,
-        "assetStatus": "string",
-        "primaryAnalystId": 0,
-        "primaryAnalyst": "string",
-        "secondaryAnalystId": 0,
-        "secondaryAnalyst": "string",
-        "sectorId": 0,
-        "sector": extracted_data.get("Detail tab", {}).get("Sector", "Not Found"),
-        "subSectorId": 0,
-        "subSector": "string",
-        "accountTypeId": 0,
-        "primaryBM": "string",
-        "secondaryBM": "string",
-        "modifiedBy": 0,
-        "managerContactId": 0,
-        "managerContact": "string",
-        "returnsList": [
-            {
-            "dateType": "string",
-            "returnAmount": 0,
-            "returnDate": formatted_time,
-            "returnFreq": 1,
-            "isFinal": "true",
-            "roR": 0,
-            "roRNullable": 0,
-            "entityName": "string",
-            "reportDate": formatted_time,
-            "date": formatted_time,
-            "entityId": 0
-            }
-        ],
-        "assetsList": [
-            {
-            "assetType": "string",
-            "assetValue": 0,
             "assetId": 0,
-            "assetName": "string",
+            "securityTypeId": 0,
+            "securityType": f"{extracted_data.get('Security Type', 'Not Found')}",
+            "assetClassId": 0,
+            "assetClass": "string",
+            "assetName": f"genai {extracted_data.get('Asset Name', 'Not Found')}",
+            "strategyId": 0,
+            "strategy": f"{extracted_data.get('Strategy', 'Not Found')}",
+            "substrategyId": 0,
+            "substrategy": f"{extracted_data.get('Substrategy', 'Not Found')}",
+            "strategyDescription": "string",
+            "abbrName": f"{extracted_data.get('Abbreviation Name', 'Not Found')}",
+            "effectiveDate": f"{extracted_data.get('Inception Date', 'Not Found')}",
+            "overrideStrategy": "string",
+            "investmentStatusId": 0,
+            "investmentStatus": "string",
+            "bloombergId": "string",
+            "valuationDate": current_time,
+            "regionId": 0,
+            "region": f"{extracted_data.get('Region', 'Not Found')}",
+            "subregionId": 0,
+            "subregion": "string",
+            "assetStatusId": 0,
+            "assetStatus": f"{extracted_data.get('Investment Status', 'Not Found')}",
+            "primaryAnalystId": 0,
+            "primaryAnalyst": "string",
+            "secondaryAnalystId": 0,
+            "secondaryAnalyst": "string",
+            "sectorId": 0,
+            "sector": f"{extracted_data.get('Sector', 'Not Found')}",
+            "subSectorId": 0,
+            "subSector": "string",
             "accountTypeId": 0,
-            "isMarketable": "true"
-            }
-        ],
-        "portfolioHoldings": [
-            {
-            "familyName": "string",
-            "basketId": 0,
-            "basketName": "string",
-            "investmentValue": 0
-            }
-        ],
-        "transactionList": [
-            {
-            "transTypeId": 0,
-            "transName": "string",
-            "transDate": "2025-03-18T10:42:03.951Z",
-            "transValue": 0
-            }
-        ],
-        "rptDate": "2025-03-18T10:42:03.951Z",
-        "ytdTWR": 0,
-        "oneYrTWR": 0,
-        "threeYrTWR": 0,
-        "fiveYrTWR": 0,
-        "itdtwr": 0,
-        "itdStdDev": 0,
-        "iddRating": "string",
-        "iddRatingValue": 0,
-        "iddDate": "2025-03-18T10:42:03.951Z",
-        "IsActive": is_active,
-        "oddRating": "string",
-        "oddRatingValue": 0,
-        "oddDate": "2025-03-18T10:42:03.951Z",
-        "isClientSpecific": 'true'
+            "primaryBM": f"{extracted_data.get('Benchmark 1', 'Not Found')}",
+            "secondaryBM": f"{extracted_data.get('Benchmark 2', 'Not Found')}",
+            "modifiedBy": 0,
+            "managerContactId": 0,
+            "managerContact": "string",
+            "returnsList": [
+                {
+                    "dateType": "string",
+                    "returnAmount": 0,
+                    "returnDate": current_time,
+                    "returnFreq": 1,
+                    "isFinal": "true",
+                    "roR": 0,
+                    "roRNullable": 0,
+                    "entityName": "string",
+                    "reportDate": current_time,
+                    "date": current_time,
+                    "entityId": 0
+                }
+            ],
+            "assetsList": [
+                {
+                    "assetType": f"{extracted_data.get('Asset Class', 'Not Found')}",
+                    "assetValue": 0,
+                    "assetId": 0,
+                    "assetName": f"{extracted_data.get('Asset Name', 'Not Found')}",
+                    "accountTypeId": 0,
+                    "isMarketable": "true"
+                }
+            ],
+            "portfolioHoldings": [
+                {
+                    "familyName": "string",
+                    "basketId": 0,
+                    "basketName": "string",
+                    "investmentValue": 0
+                }
+            ],
+            "transactionList": [
+                {
+                    "transTypeId": 0,
+                    "transName": "string",
+                    "transDate": "2025-03-18T10:42:03.951Z",
+                    "transValue": 0
+                }
+            ],
+            "rptDate": "2025-03-18T10:42:03.951Z",
+            "ytdTWR": 0,
+            "oneYrTWR": 0,
+            "threeYrTWR": 0,
+            "fiveYrTWR": 0,
+            "itdtwr": 0,
+            "itdStdDev": 0,
+            "iddRating": "string",
+            "iddRatingValue": 0,
+            "iddDate": "2025-03-18T10:42:03.951Z",
+            "IsActive": is_active,
+            "oddRating": f"{extracted_data.get('ODD Rating', 'Not Found')}",
+            "oddRatingValue": 0,
+            "oddDate": "2025-03-18T10:42:03.951Z",
+            "isClientSpecific": "true"
         }
         # return {
         #     "securityType": extracted_data.get("Security Type", "Not Found"),
