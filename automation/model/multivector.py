@@ -235,7 +235,7 @@ def content_piepline():
     print(extracted_json)
     return extracted_json
 
-content_piepline()
+# content_piepline()
 
 # instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision."
 # response = data_pipeline.process_data(instructions)
