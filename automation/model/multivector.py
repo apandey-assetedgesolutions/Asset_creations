@@ -23,7 +23,7 @@ VECTORDATABASEPATH_1 = "multivector/parent"
 VECTORDATABASEPATH_2 = "multivector/child"
 
 # Initialize the model
-llm = AzureChatOpenAI(deployment_name="gpt-4o", model_name="gpt-4o", temperature=0.8)
+llm = AzureChatOpenAI(deployment_name="gpt-4o", model_name="gpt-4o", temperature=0.8,top_p=0.9)
 embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L12-v2', model_kwargs={'device': 'cpu'})
 
 class DocumentLoader:
@@ -159,6 +159,7 @@ class DataExtractionPipeline:
             }}
 
             🔎 EXTRACTION TIPS:
+            •	Return Time Series and Exposure Time Series → Analyze the Return Time Series of an asset based on the performance data in the table. Identify trends and explain how the asset’s performance has changed over time — for example, if it had strong gains last year but shows a 0.12% loss this year. Focus on month-over-month returns, and provide a concise summary of key changes or patterns visible in the time series, and example format like "2025: 5.5%, 2024: 21.8%, 2023: 6.9%, 2022: 6.2%"
             •	Security Type → Presentation document (e.g., "Private Equity", "Hedge Fund").
             •	Sector → "Detail" tab in Presentation.
             •	Region → If listed as a percentage, convert to region name (e.g., "86% North America" → "North America").
@@ -166,6 +167,7 @@ class DataExtractionPipeline:
             •	Domicile → Usually in the Attributes tab (e.g., "Delaware" → "U.S.").
             •	AUM, Exposure, Return Time Series → Extract from respective spreadsheet/document sections.
             •	If multiple values are found, prioritize the most explicit and structured one.
+
 
 
 

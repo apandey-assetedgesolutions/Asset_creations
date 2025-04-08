@@ -3,6 +3,9 @@ import warnings
 import yaml
 import requests
 import json
+import re
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from automation.apis.process_documents import APIClient, PDFHandler
 from automation.model.multivector import content_piepline
 from sentence_transformers import SentenceTransformer
@@ -153,7 +156,7 @@ except Exception as e:
 # Upload extracted data
 try:
     formatted_data = client.format_asset_data(extracted_json)
-    print(formatted_data)
+    # print(formatted_data)
     upload_response = client.upload_asset(formatted_data)
     print("Upload Response:", upload_response)
 except Exception as e:
@@ -356,28 +359,139 @@ except Exception as e:
 
 print("Step 6: Asset returns creation")
 
-# Asset returns creation
-assert_return_payload = {
-    "rorValuationId": 0,
-    "navValuationId": 0,
-    "entityTypeId": 1,
-    "entityId": upload_response,
-    "entityName": None,
-    "frequencyId": 0,
-    "valuationDate": "2024-12-31T00:00:00",
-    "rorValue": 6.88,
-    "navValue": None,
-    "estimateActual": None,
-    "modifiedBy": 0,
-    "modifiedByName": None,
-    "modifiedDate": "2025-02-27T00:00:00"
-}
+# # Asset returns creation
+# assert_return_payload = {
+#     "rorValuationId": 0,
+#     "navValuationId": 0,
+#     "entityTypeId": 1,
+#     "entityId": upload_response,
+#     "entityName": None,
+#     "frequencyId": 0,
+#     "valuationDate": "2024-12-31T00:00:00",
+#     "rorValue": 6.88,
+#     "navValue": None,
+#     "estimateActual": None,
+#     "modifiedBy": 0,
+#     "modifiedByName": None,
+#     "modifiedDate": "2025-02-27T00:00:00"
+# }
+
+# try:
+#     returns_creation  = client.post_request(endpoint= "/AssetValuation/InsertUpdateAssetValuation", payload=assert_return_payload)
+#     print(returns_creation)
+# except Exception as e:
+#     print(f"Exception: {Exception}")
+
+
+
+def extract_returns(time_series):
+    # Detect format 1 (Class-based)
+    class_based = re.findall(
+        r"(Founders Class \d): 2023 - Gross: ([\d.]+)%, Net: ([\d.]+)%, 2024 - Gross: ([\d.]+)%, Net: ([\d.]+)%",
+        time_series
+    )
+    
+    # Detect format 2 (Flat year-based)
+    year_based = re.findall(r"(\d{4}):\s*([\d.]+)%", time_series)
+    
+    return class_based, year_based
+
+
+def generate_payloads(doc_json, entity_id, modified_by=0, modified_by_name="String"):
+    payloads = []
+    time_series = doc_json.get("Return Time Series", "")
+    entity_name = doc_json.get("Asset Name", "Unknown")
+
+    class_based, year_based = extract_returns(time_series)
+
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Format 1: Founders Class pattern
+    for match in class_based:
+        class_name, gross_2023, net_2023, gross_2024, net_2024 = match
+
+        for year, gross_val, net_val in [(2024, gross_2024, net_2024)]:
+            for i in range(12):
+                date = datetime(year, 1, 31) + relativedelta(months=i)
+                date_str = date.strftime("%Y-%m-%dT00:00:00")
+
+                payloads.extend([
+                    {
+                        "rorValuationId": 0,
+                        "navValuationId": 0,
+                        "entityTypeId": 1,
+                        "entityId": entity_id,
+                        "entityName": f"{class_name} Gross",
+                        "frequencyId": 3,
+                        "valuationDate": date_str,
+                        "rorValue": float(gross_val),
+                        "navValue": None,
+                        "estimateActual": "Actual",
+                        "modifiedBy": modified_by,
+                        "modifiedByName": modified_by_name,
+                        "modifiedDate": now,
+                        "entityMasterId": 0
+                    },
+                    {
+                        "rorValuationId": 0,
+                        "navValuationId": 0,
+                        "entityTypeId": 1,
+                        "entityId": entity_id,
+                        "entityName": f"{class_name} Net",
+                        "frequencyId": 3,
+                        "valuationDate": date_str,
+                        "rorValue": float(net_val),
+                        "navValue": None,
+                        "estimateActual": "Actual",
+                        "modifiedBy": modified_by,
+                        "modifiedByName": modified_by_name,
+                        "modifiedDate": now,
+                        "entityMasterId": 0
+                    }
+                ])
+
+    # Format 2: Flat year-based pattern
+    for year_str, return_val in year_based:
+        year = int(year_str)
+        return_val = float(return_val)
+
+        for i in range(12):
+            date = datetime(year, 1, 31) + relativedelta(months=i)
+            date_str = date.strftime("%Y-%m-%dT00:00:00")
+
+            payload = {
+                "rorValuationId": 0,
+                "navValuationId": 0,
+                "entityTypeId": 1,
+                "entityId": entity_id,
+                "entityName": entity_name,
+                "frequencyId": 3,
+                "valuationDate": date_str,
+                "rorValue": return_val,
+                "navValue": None,
+                "estimateActual": "Actual",
+                "modifiedBy": modified_by,
+                "modifiedByName": modified_by_name,
+                "modifiedDate": now,
+                "entityMasterId": 0
+            }
+
+            payloads.append(payload)
+
+    return payloads
+
+
+payloads = generate_payloads(doc_json=extracted_json, entity_id=upload_response)
 
 try:
-    returns_creation  = client.post_request(endpoint= "/AssetValuation/InsertUpdateAssetValuation", payload=assert_return_payload)
-    print(returns_creation)
+    for payload in payloads:
+    # print(f"Sending: {payload['entityName']} - {payload['valuationDate']} - {payload['rorValue']}")
+        response = client.post_request(endpoint="/AssetValuation/InsertUpdateAssetValuation", payload=payload)
+    print("✅ Success")
 except Exception as e:
-    print(f"Exception: {Exception}")
+    print(f"❌ Error: {e}")
+
+
 
 print("step 7: Create AUM")
 create_aum_payload = {
