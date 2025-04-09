@@ -233,7 +233,7 @@ class APIClient:
             "securityType": f"{extracted_data.get('Security Type', 'Not Found')}",
             "assetClassId": 0,
             "assetClass": "string",
-            "assetName": f"Genai ----- {extracted_data.get('Asset Name', 'Not Found')}",
+            "assetName": f"{extracted_data.get('Asset Name', 'Not Found')} ---- Genai",
             "strategyId": 0,
             "strategy": f"{extracted_data.get('Strategy', 'Not Found')}",
             "substrategyId": 0,
