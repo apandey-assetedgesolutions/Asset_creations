@@ -383,34 +383,34 @@ print("Step 6: Asset returns creation")
 #     print(f"Exception: {Exception}")
 
 
+import re
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 def extract_returns(time_series):
-    # Detect format 1 (Class-based)
+    # Class-based return series
     class_based = re.findall(
         r"(Founders Class \d): 2023 - Gross: ([\d.]+)%, Net: ([\d.]+)%, 2024 - Gross: ([\d.]+)%, Net: ([\d.]+)%",
         time_series
     )
-    
-    # Detect format 2 (Flat year-based)
+    # Year-based flat values
     year_based = re.findall(r"(\d{4}):\s*([\d.]+)%", time_series)
-    
+
     return class_based, year_based
 
-
-def generate_payloads(doc_json, entity_id, modified_by=0, modified_by_name="String"):
+def generate_payloads(doc_json, entity_id, modified_by=0, modified_by_name="System"):
     payloads = []
     time_series = doc_json.get("Return Time Series", "")
-    entity_name = doc_json.get("Asset Name", "Unknown")
+    entity_name = doc_json.get("Asset Name", "Unknown Asset")
 
     class_based, year_based = extract_returns(time_series)
-
     now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-    # Format 1: Founders Class pattern
+    # Class-based series: 12-month expansion
     for match in class_based:
         class_name, gross_2023, net_2023, gross_2024, net_2024 = match
 
-        for year, gross_val, net_val in [(2024, gross_2024, net_2024)]:
+        for year, gross_val, net_val in [(2023, gross_2023, net_2023), (2024, gross_2024, net_2024)]:
             for i in range(12):
                 date = datetime(year, 1, 31) + relativedelta(months=i)
                 date_str = date.strftime("%Y-%m-%dT00:00:00")
@@ -450,46 +450,51 @@ def generate_payloads(doc_json, entity_id, modified_by=0, modified_by_name="Stri
                     }
                 ])
 
-    # Format 2: Flat year-based pattern
+    # Year-based values (create ONE payload per year)
     for year_str, return_val in year_based:
         year = int(year_str)
         return_val = float(return_val)
+        valuation_date = f"{year}-12-31T00:00:00"
 
-        for i in range(12):
-            date = datetime(year, 1, 31) + relativedelta(months=i)
-            date_str = date.strftime("%Y-%m-%dT00:00:00")
+        payload = {
+            "rorValuationId": 0,
+            "navValuationId": 0,
+            "entityTypeId": 1,
+            "entityId": entity_id,
+            "entityName": entity_name,
+            "frequencyId": 3,
+            "valuationDate": valuation_date,
+            "rorValue": return_val,
+            "navValue": None,
+            "estimateActual": "Actual",
+            "modifiedBy": modified_by,
+            "modifiedByName": modified_by_name,
+            "modifiedDate": now,
+            "entityMasterId": 0
+        }
 
-            payload = {
-                "rorValuationId": 0,
-                "navValuationId": 0,
-                "entityTypeId": 1,
-                "entityId": entity_id,
-                "entityName": entity_name,
-                "frequencyId": 3,
-                "valuationDate": date_str,
-                "rorValue": return_val,
-                "navValue": None,
-                "estimateActual": "Actual",
-                "modifiedBy": modified_by,
-                "modifiedByName": modified_by_name,
-                "modifiedDate": now,
-                "entityMasterId": 0
-            }
-
-            payloads.append(payload)
+        payloads.append(payload)
 
     return payloads
 
 
 payloads = generate_payloads(doc_json=extracted_json, entity_id=upload_response)
 
+print(f"Generated {len(payloads)} payloads")
+for p in payloads:
+    print(f"→ {p['entityName']} | {p['valuationDate']} | {p['rorValue']}")
+
 try:
     for payload in payloads:
-    # print(f"Sending: {payload['entityName']} - {payload['valuationDate']} - {payload['rorValue']}")
-        response = client.post_request(endpoint="/AssetValuation/InsertUpdateAssetValuation", payload=payload)
-    print("✅ Success")
+        response = client.post_request(
+            endpoint="/AssetValuation/InsertUpdateAssetValuation",
+            payload=payload
+        )
+        print(f"✅ Uploaded: {payload['valuationDate']} | {payload['rorValue']}")
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f"❌ Error occurred: {e}")
+
+
 
 
 

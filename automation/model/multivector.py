@@ -3,6 +3,7 @@ import re
 import json
 import concurrent.futures
 from dotenv import load_dotenv
+from langsmith import traceable
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import AzureChatOpenAI
@@ -11,6 +12,14 @@ from pydantic.v1 import BaseModel
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredExcelLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+from langfuse import Langfuse
+
+langfuse = Langfuse(
+  secret_key="sk-lf-04125c6d-b9d1-4cdb-a7b0-5ef7137784b6",
+  public_key="pk-lf-6b4b8658-38bc-4278-afa3-4382d311711c",
+  host="https://us.cloud.langfuse.com"
+)
 
 # Load environment variables
 load_dotenv()
@@ -23,7 +32,7 @@ os.environ["OPENAI_API_VERSION"] = "2023-03-15-preview"
 # os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
 # os.environ["OPENAI_API_VERSION"] = "2024-08-01-preview"
 
-DATAFILEPATH = r"./data/IPPE"
+DATAFILEPATH = r"./data/ibex"
 VECTORDATABASEPATH_1 = "multivector/parent"
 VECTORDATABASEPATH_2 = "multivector/child"
 
@@ -235,7 +244,7 @@ def content_piepline():
     print(extracted_json)
     return extracted_json
 
-content_piepline()
+# content_piepline()
 
 # instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision."
 # response = data_pipeline.process_data(instructions)
