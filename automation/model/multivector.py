@@ -4,6 +4,10 @@ import json
 import concurrent.futures
 from dotenv import load_dotenv
 from langsmith import traceable
+from typing import List, Dict
+from datetime import date
+
+from prompt import PromptsInstructions
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import AzureChatOpenAI
@@ -12,14 +16,7 @@ from pydantic.v1 import BaseModel
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredExcelLoader
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
-from langfuse import Langfuse
-
-langfuse = Langfuse(
-  secret_key="sk-lf-04125c6d-b9d1-4cdb-a7b0-5ef7137784b6",
-  public_key="pk-lf-6b4b8658-38bc-4278-afa3-4382d311711c",
-  host="https://us.cloud.langfuse.com"
-)
+from langchain_core.output_parsers import JsonOutputParser
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +29,12 @@ os.environ["OPENAI_API_VERSION"] = "2023-03-15-preview"
 # os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
 # os.environ["OPENAI_API_VERSION"] = "2024-08-01-preview"
 
-DATAFILEPATH = r"./data/ibex"
+os.environ['LANGSMITH_TRACING '] = os.getenv('LANGSMITH_TRACING')
+os.environ['LANGSMITH_ENDPOINT'] = os.getenv('LANGSMITH_ENDPOINT')
+os.environ['LANGSMITH_API_KEY'] = os.getenv('LANGSMITH_API_KEY')
+os.environ["LANGSMITH_PROJECT"] = os.getenv('LANGSMITH_PROJECT')
+
+DATAFILEPATH = r"./data/caligan"
 VECTORDATABASEPATH_1 = "multivector/parent"
 VECTORDATABASEPATH_2 = "multivector/child"
 
@@ -40,6 +42,17 @@ VECTORDATABASEPATH_2 = "multivector/child"
 llm = AzureChatOpenAI(deployment_name="gpt-4o", model_name="gpt-4o", temperature=0.8,top_p=0.9)
 # llm = AzureChatOpenAI(deployment_name="gpt-4o-mini", model_name="gpt-4o-mini", temperature=0.8,top_p=0.9)
 embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L12-v2', model_kwargs={'device': 'cpu'})
+PROMPTS = PromptsInstructions()
+
+
+class Details(BaseModel):
+    AssetName: str
+    AbbreviationName: str
+    SecurityType: str
+    InceptionDate: date
+    Strategy: str
+
+details_parser = JsonOutputParser(pydantic_object=Details)
 
 class DocumentLoader:
     """Handles document loading based on file type."""
@@ -122,74 +135,9 @@ class DataExtractionPipeline:
     def create_prompt(self):
         """Creates a structured prompt for document processing."""
         return PromptTemplate(
-            template="""
-            You are a highly specialized expert in document data extraction, with a strong understanding of financial and investment-related content. Given a {text}, your objective is to extract specific fields accurately—by reasoning through context, structure, and formatting patterns. Follow a deliberate, step-by-step thought process. Use self-questions to guide extraction and apply logic to resolve ambiguity.
-            🧠 THINK, THEN ACT:
-            For each field, follow this process:
-            1.	Think:
-            o	"Where in this text would this information most likely appear?"
-            o	"Are there variations or synonyms I should account for?"
-            o	"Does this match known patterns from financial documents?"
-            2.	Act:
-            o	Extract the correct value.
-            o	Normalize format where needed.
-            o	If unavailable, return "N/A".
-            🧩 INSTRUCTIONS:
-            1.	Pattern Recognition: Identify and extract relevant fields using contextual and structural cues.
-            2.	Variation Handling: Normalize differences in format (e.g., "Feb 1, 2022" → "02/01/2022").
-            3.	Noise Filtering: Ignore irrelevant or unrelated content. Focus only on actionable data.
-            4.	Strict JSON Format: Return output only in the following format. No additional text or commentary.
-            5.	Missing Fields: Return "N/A" where data is not available or cannot be confidently inferred.
-
-            🎯 OUTPUT FORMAT (JSON)
-            json
-            CopyEdit
-            {{
-            "Asset Name": "",
-            "Abbreviation Name": "",
-            "Asset Manager": "",
-            "Security Type": "",
-            "Inception Date": "",
-            "Investment Status": "",
-            "Asset Status": "",
-            "Strategy": "",
-            "Substrategy": "",
-            "Primary Analyst": "",
-            "Secondary Analyst": "",
-            "Sector": "",
-            "Subsector": "",
-            "Asset Class": "",
-            "Region": "",
-            "Classification": "",
-            "Benchmark 1": "",
-            "Benchmark 2": "",
-            "IDD Rating": "",
-            "ODD Rating": "",
-            "Legal Structure": "",
-            "Domicile": "",
-            "AUM Time Series": "",
-            "Exposure Time Series": "",
-            "Return Time Series": "",
-            "Management Company": ""
-            }}
-
-            🔎 EXTRACTION TIPS:
-            •	Return Time Series and Exposure Time Series → Analyze the Return Time Series of an asset based on the performance data in the table. Identify trends and explain how the asset’s performance has changed over time — for example, if it had strong gains last year but shows a 0.12% loss this year. Focus on month-over-month returns, and provide a concise summary of key changes or patterns visible in the time series, and example format like "2025: 5.5%, 2024: 21.8%, 2023: 6.9%, 2022: 6.2%"
-            •	Security Type → Presentation document (e.g., "Private Equity", "Hedge Fund").
-            •	Sector → "Detail" tab in Presentation.
-            •	Region → If listed as a percentage, convert to region name (e.g., "86% North America" → "North America").
-            •	Legal Structure → From "Attributes" tab; interpret references to legal types (e.g., "Delaware Limited Partnership" → "Partnership").
-            •	Domicile → Usually in the Attributes tab (e.g., "Delaware" → "U.S.").
-            •	AUM, Exposure, Return Time Series → Extract from respective spreadsheet/document sections.
-            •	If multiple values are found, prioritize the most explicit and structured one.
-
-
-
-
-            Context1: {context}
-            Context2: {context2}
-            """,
+            template=PROMPTS.asset_creation(),
             input_variables=["text", "context", "context2"],
+            # partial_variables={"format_instructions": details_parser.get_format_instructions()},
         )
 
     def process_data(self, input_text):
@@ -239,12 +187,14 @@ data_pipeline = DataExtractionPipeline(parent_vectorstore, child_vectorstore, ll
 def content_piepline():
     instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision."
     response = data_pipeline.process_data(instructions)
+    # print(response)
     response_content = response.content if hasattr(response, "content") else str(response)
+    print("*"*40)
     extracted_json = JSONExtractor.extract_json(response_content)
     print(extracted_json)
     return extracted_json
 
-# content_piepline()
+content_piepline()
 
 # instructions = "Extract the mentioned fields details from the provided document while maintaining clarity and precision."
 # response = data_pipeline.process_data(instructions)
